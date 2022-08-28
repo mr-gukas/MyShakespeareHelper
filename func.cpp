@@ -47,50 +47,89 @@ char* eatPunct(char* str)
     return str;
 }
 
-void upgradePoem(FILE* processed, FILE* source)
+void upgradePoem(FILE* const processed, FILE* const source)
 {
     ASSERT(processed != NULL)
     ASSERT(source    != NULL)
 
-    char** lines = (char**) malloc(sizeof(char*));;
-    size_t index = 0;
+    long nChar   = fileSize(source);
+    long nLines  = 0;
+    char *chars  = (char *) calloc(nChar, sizeof(char));
 
-    while (!feof(source))
+    for (long index = 0; index < nChar; ++index)
     {
-        lines[index] = (char*) malloc(sizeof(char)* 256);
-        fgets(lines[index], 254, source);
-        ++index;
-        lines = (char**) realloc(lines, sizeof(char*)*(index + 1));
+        chars[index] = (char) getc(source);
+        if (chars[index] == '\n')
+        {
+            ++nLines;
+        }
     }
 
-    linesSort(lines, index);
+    struct fileLines* lines = (struct fileLines*) calloc(nLines, sizeof(struct fileLines));
 
-    for (size_t i = 0; i < index; i++)
+    long   line        = 0;
+    long   lineStart   = 0;
+
+    for (long index = 1; index < nChar; index++)
     {
-        fputs(lines[i], processed);
-        free(lines[i]);
+        if (chars[index] == '\n')
+        {
+            chars[index - 1] = '\n';
+            chars[index    ] = '\0';
+
+            lines[line].lineStart = chars + lineStart;
+            lines[line].lineLen   = index - lineStart;
+
+            lineStart = index + 1;
+            ++line;
+        }
+
+        if (lineStart > nChar)
+        {
+            break;
+        }
     }
 
+
+    linesSort(lines, nLines);
+
+    for (long index = 0; index < nLines; ++index)
+    {
+        fputs(lines[index].lineStart, processed);
+    }
+
+    free(chars);
     free(lines);
 }
 
 
-void linesSort(char** lines, size_t arrLen)
+void linesSort(struct fileLines* const lines, const long arrLen)
 {
     ASSERT(lines != NULL)
 
-    for (size_t i = 0; i < arrLen; i++)
+    for (long i = 0; i < arrLen; i++)
     {
-        for (size_t j = i + 1; j < arrLen; j++)
+        for (long j = i + 1; j < arrLen; j++)
         {
-            if (lineCmp(lines[i], lines[j]) > 0)
+            if (lineCmp(lines[i].lineStart, lines[j].lineStart) > 0)
             {
-                char *temp = lines[i];
-                lines[i]   = lines[j];
-                lines[j]   = temp;
+                struct fileLines temp = lines[i];
+                lines[i]              = lines[j];
+                lines[j]              = temp;
             }
 
         }
     }
+}
+
+long fileSize(FILE* const file)
+{
+    ASSERT(file != NULL)
+
+    fseek(file, 0, SEEK_END);
+    long pos = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    return pos;
 }
 
