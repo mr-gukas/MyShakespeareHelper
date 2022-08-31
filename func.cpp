@@ -1,31 +1,34 @@
 #include "poem.h"
 
-int lineCmp(char* str1, char* str2)
+int lineCmp(const void* str1, const void* str2)
 {
     ASSERT(str1 != NULL)
     ASSERT(str2 != NULL)
 
-    while (*str1 && *str2)
-    {
-        str1 = eatPunct(str1);
-        str2 = eatPunct(str2);
+    const char* line1 = ((const fileLines*) str1)->lineStart;
+    const char* line2 = ((const fileLines*) str2)->lineStart;
 
-        if (*str1 && *str2 && toupper(*str1) != toupper(*str2))
+    while (*line1 && *line2)
+    {
+        line1 = eatPunct(line1);
+        line2 = eatPunct(line2);
+
+        if (*line1 && *line2 && toupper(*line1) != toupper(*line2))
         {
-            return (toupper(*str1) - toupper(*str2));
+            return (toupper(*line1) - toupper(*line2));
         }
-        else if (*str1 && *str2)
+        else if (*line2 && *line2)
         {
-            ++str1;
-            ++str2;
+            ++line1;
+            ++line2;
         }
     }
 
-    if (!(*str1 || *str2))
+    if (!(*line1 || *line2))
     {
         return 0;
     }
-    else if (!(*str1))
+    else if (!(*line1))
     {
         return -1;
     }
@@ -35,7 +38,7 @@ int lineCmp(char* str1, char* str2)
     }
 }
 
-char* eatPunct(char* str)
+const char* eatPunct(const char* str)
 {
     ASSERT(str!= NULL)
 
@@ -65,7 +68,7 @@ void upgradePoem(FILE* const processed, FILE* const source)
         }
     }
 
-    struct fileLines* lines = (struct fileLines*) calloc(nLines, sizeof(struct fileLines));
+    fileLines* lines = (fileLines*) calloc(nLines, sizeof(fileLines));
 
     long   line        = 0;
     long   lineStart   = 0;
@@ -90,8 +93,7 @@ void upgradePoem(FILE* const processed, FILE* const source)
         }
     }
 
-
-    linesSort(lines, nLines);
+    mergeSort(lines, 0, nLines - 1);
 
     for (long index = 0; index < nLines; ++index)
     {
@@ -103,7 +105,7 @@ void upgradePoem(FILE* const processed, FILE* const source)
 }
 
 
-void linesSort(struct fileLines* const lines, const long arrLen)
+void linesSort(fileLines* const lines, const long arrLen)
 {
     ASSERT(lines != NULL)
 
@@ -111,9 +113,9 @@ void linesSort(struct fileLines* const lines, const long arrLen)
     {
         for (long j = i + 1; j < arrLen; j++)
         {
-            if (lineCmp(lines[i].lineStart, lines[j].lineStart) > 0)
+            if (lineCmp(&lines[i], &lines[j]) > 0)
             {
-                struct fileLines temp = lines[i];
+                fileLines temp = lines[i];
                 lines[i]              = lines[j];
                 lines[j]              = temp;
             }
@@ -132,4 +134,45 @@ long fileSize(FILE* const file)
 
     return pos;
 }
+
+void mergeSort(fileLines* const lines, size_t left, size_t right)
+{
+    ASSERT(lines != NULL)
+
+    if (left == right) return;
+
+    size_t middle = (left + right) / 2;
+
+    mergeSort(lines, left, middle);
+    mergeSort(lines, middle + 1, right);
+
+    size_t subarray1  = left;
+    size_t subarray2 = middle + 1;
+
+    fileLines* temp = (fileLines*) calloc(right + 1, sizeof(fileLines));
+
+    for (size_t index = 0; index < right - left + 1; ++index)
+    {
+
+        if ((subarray2 > right) ||
+           ((subarray1 <= middle) &&
+             lineCmp((const fileLines*) &lines[subarray1], (const fileLines*) &lines[subarray2]) < 0))
+        {
+            temp[index] = lines[subarray1];
+            ++subarray1;
+        }
+        else
+        {
+            temp[index] = lines[subarray2];
+            ++subarray2;
+        }
+    }
+
+    for (size_t index = 0; index < right - left + 1; ++index)
+    {
+        lines[left + index] = temp[index];
+        free(temp);
+    }
+}
+
 

@@ -19,14 +19,6 @@ struct fileLines
 };
 
 /**
- * @brief A function for sorting array of strings
- * @param [in] lines - array that we need to sort
- * @param [in] arrLen - length of the lines
- * @return Return nothing
- */
-void linesSort(struct fileLines* const lines, const long arrLen);
-
-/**
  * @brief A function for sorting lines in text in alphabetical order
  * @param [in] processed - pointer on file with sorted text
  * @param [in] source - pointer on file with source text
@@ -42,14 +34,14 @@ void upgradePoem(FILE* const processed, FILE* const source);
  *         positive value - if str1 is after str2 in alphabetical order
  *         negative value - if str1 is before str2 in alphabetical order
  */
-int lineCmp(char *str1, char *str2);
+int lineCmp(const void* str1, const void* str2);
 
 /**
  * @brief A function that skips non-letter characters in a string
  * @param [in] str - a pointer on the string
  * @return Pointer to a letter character in the source string
  */
-char* eatPunct(char* str);
+const char* eatPunct(const char* str);
 
 /**
  * @brief A function that count how many characters are in the file
@@ -57,5 +49,15 @@ char* eatPunct(char* str);
  * @return Count of characters
  */
 long fileSize(FILE* const file);
+
+
+/**
+ * @brief A function for sorting array of strings with merge sorting
+ * @param [in] lines - array that we need to sort
+ * @param [in] left - index of begin of the array
+ * @param [in] right - index of end of the array
+ * @return Return nothing
+ */
+void mergeSort(fileLines* const lines, size_t left, size_t right);
 
 
