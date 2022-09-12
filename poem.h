@@ -3,19 +3,21 @@
 #include <ctype.h>
 #include <string.h>
 
-#define ASSERT(condition)                      \
-if (!(condition)){                              \
-    printf("Error in %s:\n", #condition);        \
-    printf("FILE: %s\n", __FILE__);               \
-    printf("LINE: %d\n", __LINE__);                \
-    printf("FUNCTION: %s\n", __PRETTY_FUNCTION__);  \
-    abort();                                         \
-}
+#define ASSERT(condition)                                   \
+if (!(condition)){                                           \
+    fprintf(stderr, "Error in %s:\n"                          \
+                    "FILE: %s\n"                               \
+                    "LINE: %d\n"                                \
+                    "FUNCTION: %s\n",                            \
+           #condition, __FILE__, __LINE__, __PRETTY_FUNCTION__);  \
+    abort();}
+
 /// A data structure that contains pointer on a begin of a line in a characters array and line's length
 struct fileLines
 {
     char* lineStart = NULL;///< a pointer on the begin of line
-    long lineLen = 0;///< length of line
+    size_t lineLen = 0;///< length of line
+    size_t lineIndex = 0;                   ///
 };
 
 /**
@@ -34,21 +36,21 @@ void upgradePoem(FILE* const processed, FILE* const source);
  *         positive value - if str1 is after str2 in alphabetical order
  *         negative value - if str1 is before str2 in alphabetical order
  */
-int lineCmp(const void* str1, const void* str2);
+int leftLineCmp(const void* str1, const void* str2);
 
 /**
  * @brief A function that skips non-letter characters in a string
  * @param [in] str - a pointer on the string
  * @return Pointer to a letter character in the source string
  */
-const char* eatPunct(const char* str);
+const char* leftEatPunct(const char* str);
 
 /**
  * @brief A function that count how many characters are in the file
  * @param [in] file - a pointer on the file
  * @return Count of characters
  */
-long fileSize(FILE* const file);
+size_t fileSize(FILE* const file);
 
 
 /**
@@ -58,6 +60,24 @@ long fileSize(FILE* const file);
  * @param [in] right - index of end of the array
  * @return Return nothing
  */
-void mergeSort(fileLines* const lines, size_t left, size_t right);
+void mergeSort(void* const data, void* const supporting, size_t left, size_t right, size_t size, int (* comparator)(const void *, const void *));
+
+int rightLineCmp(const void* str1, const void* str2);
+
+int sourceLineCmp(const void* str1, const void* str2);
+
+void rightEatPunct(const char* str, int* len);
+
+void fillTheFile(FILE* processed, fileLines* data, fileLines* support, size_t nLines, int (* comparator)(const void *, const void *));
+
+void countInText(char* buf, char search, size_t* count);
+
+struct TEXT
+{
+    char * buf = NULL;
+    size_t nChar = 0;
+    char filelines * = NULL;
+    size_t nLines = 0;
+};
 
 
