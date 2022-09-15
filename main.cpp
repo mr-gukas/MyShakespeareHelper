@@ -9,7 +9,19 @@ int main(int argc, char* argv[])
 
     ASSERT(source != NULL && processed != NULL)
 
-    upgradePoem(processed, source);
+    TEXT text = {};
+
+    upgradePoem(&text, source);
+    
+    fileLines* supporting = (fileLines*) calloc(text.nLines + 1, sizeof(fileLines));
+
+    fillTheFile(processed, text.lines, supporting, text.nLines, leftLineCmp);
+    fillTheFile(processed, text.lines, supporting, text.nLines, rightLineCmp);
+    fillTheFile(processed, text.lines, supporting, text.nLines, sourceLineCmp);
+
+    free(supporting);
+    free(text.buf);
+    free(text.lines);
 
     fclose(source);
     fclose(processed);

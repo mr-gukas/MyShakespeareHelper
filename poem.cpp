@@ -91,58 +91,14 @@ int sourceLineCmp(const void* str1, const void* str2)
     return (int) line1->lineIndex - (int) line2->lineIndex;
 }
 
-void upgradePoem(FILE* const processed, FILE* const source)
+void upgradePoem(TEXT * text, FILE* const source)
 {
-    ASSERT(processed != NULL)
     ASSERT(source    != NULL)
+    ASSERT(text      != NULL)
 
-    size_t nChar    = fileSize(source);
-    size_t nLines   = 0;
-    char   *chars   = (char *) calloc(nChar + 2, sizeof(char));
-    
-    fread(chars, sizeof(char), nChar, source);
+    createText(text, source);
 
-    for (size_t index = 0; index < nChar; ++index)
-    {
-        if (chars[index] == '\n')
-        {
-            ++nLines;
-        }
-    }
-
-    fileLines* lines = (fileLines*) calloc(nLines + 1, sizeof(fileLines));
-
-    size_t   line        = 0;
-    size_t   lineStart   = 0;
-
-    for (size_t  index = 1; index < nChar; index++)
-    {
-        if (chars[index] == '\n')
-        {
-            chars[index] = '\0';
-
-            lines[line].lineStart = chars + lineStart;
-            lines[line].lineLen   = index - lineStart;
-            lines[line].lineIndex = line;
-            lineStart             = index + 1;
-            ++line;
-        }
-
-        if (lineStart > nChar)
-        {
-            break;
-        }
-    }
-    
-    fileLines* supporting = (fileLines*) calloc(nLines + 1, sizeof(fileLines));
-    
-    fillTheFile(processed, lines, supporting, nLines, leftLineCmp);
-    fillTheFile(processed, lines, supporting, nLines, rightLineCmp);
-    fillTheFile(processed, lines, supporting, nLines, sourceLineCmp);
-
-    free(supporting);
-    free(chars);
-    free(lines);
+    matchLines(text);
 }
 
 size_t fileSize(FILE* const file)
@@ -176,35 +132,35 @@ void mergeSort(void* const data, void* const supporting, size_t left, size_t rig
 
     size_t pointer_left  = left;
     size_t pointer_right = mid + 1;
-    size_t k             = 0;
+    size_t index         = 0;
 
-    for (k = left; k <= right; k++)
+    for (index = left; index <= right; index++)
     {
         if (pointer_left == mid + 1)
         {      
-            memcpy(sp + k * size, dt + pointer_right * size, size);
+            memcpy(sp + index * size, dt + pointer_right * size, size);
             pointer_right++ ;
         }
         else if (pointer_right == right + 1)
         {
-            memcpy(sp + k * size, dt + pointer_left * size, size);
+            memcpy(sp + index * size, dt + pointer_left * size, size);
             pointer_left++;
         }
         else if (comparator((const void*) (dt + pointer_left * size), (const void*) (dt + pointer_right * size)) < 0)
         {
-            memcpy(sp + k * size, dt + pointer_left * size, size);
+            memcpy(sp + index * size, dt + pointer_left * size, size);
             pointer_left++;
         }
         else
         {
-            memcpy(sp + k * size, dt + pointer_right * size, size);
+            memcpy(sp + index * size, dt + pointer_right * size, size);
             pointer_right++;
         }
     }
 
-    for (k = left; k <= right; k++)
+    for (index = left; index <= right; index++)
     {
-        memcpy(dt + k * size, sp + k * size, size);
+        memcpy(dt + index * size, sp + index * size, size);
     }
 }
 
@@ -229,6 +185,48 @@ void countInText(char* text, char search, size_t* count)
         {
             ++(*count);
         }
+        ++index;
+    }
+}
+
+void createText(struct TEXT* text, FILE* source)
+{
+    ASSERT(text   != NULL)
+    ASSERT(source != NULL)
+    
+    text->nChar = fileSize(source);
+    text->buf = (char *) calloc(text->nChar + 2, sizeof(char));
+    
+    fread(text->buf, sizeof(char), text->nChar, source);
+    
+    countInText(text->buf, '\n', &(text->nLines));
+    
+    text->lines = (fileLines*) calloc(text->nLines + 1, sizeof(fileLines));
+}
+
+void matchLines(const struct TEXT* text)
+{
+    size_t   line        = 0;
+    size_t   lineStart   = 0;
+
+    for (size_t  index = 1; index < text->nChar; index++)
+    {
+        if (*(text->buf + index) == '\n')
+        {
+            (*(text->buf + index)= '\0');
+
+            (text->lines + line)->lineStart = text->buf + lineStart;
+            (text->lines + line)->lineLen   = index - lineStart;
+            (text->lines + line)->lineIndex = line;
+            lineStart                       = index + 1;
+            ++line;
+        }
+
+        if (lineStart > text->nChar)
+        {
+            break;
+        }
     }
 
 }
+      
